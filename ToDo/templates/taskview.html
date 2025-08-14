@@ -37,7 +37,6 @@
                         {% endif %}
                         {{ task.creationTime }} 
                         <input type="checkbox" name="isTaskDone" id="id_isTaskDone">
-                        <input type="submit" name="taskAdd" id="id_taskAdd" value="Update">
                         <input type="submit" name="taskAdd" id="id_taskAdd" value="Delete">
                     </li>
                 </ul>
@@ -47,4 +46,8 @@
         </div>
     </div>
 
+{% endblock %}
+
+{% block JS %}
+    <script src="{% static 'js/main.js' %}"></script>
 {% endblock %}
