@@ -11,7 +11,7 @@
 
 {% block content %}
 
-    <div class="tasksbox">
+    <div id="tasksbox">
         <div id="titleHeader">
             <h1>Add tasks to do</h1>
         </div>
@@ -26,7 +26,7 @@
                 <p> Completed: <input type="checkbox" name="isTaskDone" id="id_isTaskDone"></p>
             </form>
         </div>
-        <div class="taskslist">
+        <div id="taskslist">
             {% for task in tasks %}
                 <ul style="list-style: none;">
                     <li id="task-{{task.id}}"> 
@@ -36,8 +36,8 @@
                             {{ task.tasksTitle }} 
                         {% endif %}
                         {{ task.creationTime }} 
-                        <input type="checkbox" name="isTaskDone" id="id_isTaskDone">
-                        <input type="submit" name="taskAdd" id="id_taskAdd" value="Delete">
+                        <input type="checkbox" name="isTaskDone" data-task-id="{{ task.id }}" {% if task.isDone %} checked {% endif %}>
+                        <input type="submit" name="taskAdd" data-task-id="{{ task.id }}" value="Delete">
                     </li>
                 </ul>
             {% empty %}
