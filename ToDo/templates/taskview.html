@@ -29,12 +29,16 @@
         <div class="taskslist">
             {% for task in tasks %}
                 <ul style="list-style: none;">
-                    <li> 
+                    <li id="task-{{task.id}}"> 
                         {% if task.isDone %}
-                            <s> {{ task }} </s> {{ task.creationTime }}
+                            <s> {{ task.tasksTitle }} </s> 
                         {% else %}
-                            {{ task }} {{ task.creationTime }}
+                            {{ task.tasksTitle }} 
                         {% endif %}
+                        {{ task.creationTime }} 
+                        <input type="checkbox" name="isTaskDone" id="id_isTaskDone">
+                        <input type="submit" name="taskAdd" id="id_taskAdd" value="Update">
+                        <input type="submit" name="taskAdd" id="id_taskAdd" value="Delete">
                     </li>
                 </ul>
             {% empty %}
