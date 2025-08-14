@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+{% endblock %}
+
+{% block content %}
+
+    <div class="tasksbox">
+        <div id="titleHeader">
+            <h1>Add tasks to do</h1>
+        </div>
+        <div class="tasksform">
+            <form method="POST">
+                {% csrf_token %}
+                <p>
+                    <input type="text" name="tasksTitle" id="id_tasksTitle" required>
+                    <input type="submit" name="taskAdd" id="id_taskAdd" value="Add task">
+                </p>
+                <p><textarea name="tasksDescrp" id="id_tasksDescrp" cols="30" rows="3" placeholder="Description (optional)"></textarea></p>
+                <p> Completed: <input type="checkbox" name="isTaskDone" id="id_isTaskDone"></p>
+            </form>
+        </div>
+        <div class="taskslist">
+            {% for task in tasks %}
+                <ul style="list-style: none;">
+                    <li> 
+                        {% if task.isDone %}
+                            <s> {{ task }} </s> {{ task.creationTime }}
+                        {% else %}
+                            {{ task }} {{ task.creationTime }}
+                        {% endif %}
+                    </li>
+                </ul>
+            {% empty %}
+                <p>No tasks to do</p>
+            {% endfor %}
+        </div>
+    </div>
+
+{% endblock %}
