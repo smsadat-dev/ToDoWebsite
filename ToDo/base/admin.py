@@ -1,3 +1,6 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import TaskModel
+
+# Registered TaskModel to admin panel
+admin.site.register(TaskModel)

@@ -11,43 +11,41 @@
 
 {% block content %}
 
-    <div id="tasksbox">
+    <div id="tasksbox" data-task-url="{% url 'base:task' %}">
         <div id="titleHeader">
             <h1>Add tasks to do</h1>
         </div>
+
+        <!-- Create Task -->
         <div class="tasksform">
             <form method="POST">
                 {% csrf_token %}
                 <p>
                     <input type="text" name="tasksTitle" id="id_tasksTitle" required>
                     <input type="submit" name="taskAdd" id="id_taskAdd" value="Add task">
-                </p>
+                </p>  
                 <p><textarea name="tasksDescrp" id="id_tasksDescrp" cols="30" rows="3" placeholder="Description (optional)"></textarea></p>
-                <p> Completed: <input type="checkbox" name="isTaskDone" id="id_isTaskDone"></p>
             </form>
         </div>
-        <div id="taskslist">
-            {% for task in tasks %}
-                <ul style="list-style: none;">
-                    <li id="task-{{task.id}}"> 
-                        {% if task.isDone %}
-                            <s> {{ task.tasksTitle }} </s> 
-                        {% else %}
-                            {{ task.tasksTitle }} 
-                        {% endif %}
+
+        <!-- Show Tasks -->
+        <div class="taskslist">
+                {% for task in tasks %}
+                    <p>
+                        <span class="taskTitle">{% if task.isDone %}<s>{{ task.taskTitle }}</s>{% else %}{{ task.taskTitle }}{% endif %}</span>
                         {{ task.creationTime }} 
-                        <input type="checkbox" name="isTaskDone" data-task-id="{{ task.id }}" {% if task.isDone %} checked {% endif %}>
-                        <input type="submit" name="taskAdd" data-task-id="{{ task.id }}" value="Delete">
-                    </li>
-                </ul>
-            {% empty %}
-                <p>No tasks to do</p>
-            {% endfor %}
+                        <input type="checkbox" class="taskDoneChckBox" name="isTaskDone" data-task-id="{{ task.id }}" {% if task.isDone %} checked {% endif %}>
+                        <input type="submit" class="deleteTaskBtn" name="taskAdd" data-task-id="{{ task.id }}" value="Delete">
+                    </p>
+                {% empty %}
+                    <p>No tasks to do</p>
+                {% endfor %}
         </div>
     </div>
 
 {% endblock %}
 
 {% block JS %}
+    <script> const CSRF_TOKEN = "{{ csrf_token }}"; </script>
     <script src="{% static 'js/main.js' %}"></script>
 {% endblock %}

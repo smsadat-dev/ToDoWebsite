@@ -1,76 +1,126 @@
-document.addEventListener('DOMContentLoaded', ()=> {
+document.addEventListener('DOMContentLoaded', () => {
 
-    const taskslist = document.getElementById('taskslist');
-   
-    // ---------- CHECKBOX AUTO-UPDATE ----------
-    taskslist.addEventListener('change', (e) => {
+    const taskForm = document.querySelector('.tasksform form');
+    const taskList = document.querySelector('.taskslist');
+    const taskURL = document.getElementById('tasksbox').dataset.taskUrl;
+    console.log('task URL: ', taskURL);
+    console.log('taskList id:', taskList.id);
+
+    // ---------------- CREATE TASK ---------------- //
+
+    taskForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(taskForm);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        const response = await fetch(taskURL, {
+            method : 'POST',
+            headers : {
+                'X-CSRFToken': csrfToken
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if(data.status == 'success')
+        {
+            const taskContainer = document.querySelector('.taskslist');
+            const newTask = document.createElement('div');
+            newTask.textContent = data.task.taskTitle;
+
+            // newTask.innerHTML = `
+            //     <span class="taskTitle">${data.task.taskTitle}</span>
+            //     ${data.task.creationTime}
+            //     <input type="checkbox" class="taskDoneChckBox" data-task-id="${data.task.id}" ${data.task.isDone ? 'checked' : ''}>
+            //     <input type="submit" class="deleteTaskBtn" data-task-id="${data.task.id}" value="Delete">`;
+
+            taskContainer.prepend(newTask);
+            
+            // clear form
+            taskForm.reset();
+        }
+        else 
+        {
+            alert(data.error || 'Failed to create task');
+        }
+    });
+
+    // ---------------- UPDATE TASK ---------------- //
+
+    taskList.addEventListener('change', async (e) => {
+
         if(e.target.classList.contains('taskDoneChckBox'))
         {
-            const taskID = e.target.dataset.taskID;
-            const isDone = e.target.chekced;
+            e.preventDefault();
+            const taskID = e.target.dataset.taskId;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;            
             
-            fetch("{% url 'base:task' %}", {
-                method: 'POST',
+            const response = await fetch(taskURL, {
+                method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': '{{ csrf_token }}'
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
                 },
-                body: new URLSearchParams({
-                    'action': 'update',
-                    'task_id': taskID,
-                    'is_done': isDone
-                })
-            })
-            .then(res => res.json)
-            .then(data => {
-                if(data.status == 'Success')
+                body: JSON.stringify({task_id: taskID})
+            });
+
+            const data = await response.json();
+
+            if(data.status == 'success')
+            {
+                // toggle strikethrough
+                const taskText = e.target.previousElementSibling;
+
+                if(e.target.checked)
                 {
-                    const li = document.getElementById(`task-${taskID}`);
-                    if(isDone)
-                    {
-                        li.querySelector('s')?.remove();
-                        li.innerHTML = `<s>${li.textContent}</s>` + li.innerHTML.slice(li.innerHTML.indexOf('<input'));
-                    }
+                    taskText.style.textDecoration = 'line-through';
                 }
                 else 
                 {
-                    // Remove <s> if unchecked
-                    const sTag = li.querySelector('s');
-                    if(sTag){
-                        const text = sTag.textContent;
-                        sTag.replaceWith(document.createTextNode(text));
-                    }
+                    taskText.style.textDecoration = 'none';
                 }
-            });
-            
+            }
+            else
+            {
+                alert(data.error || 'Failed to edit task');   
+            }
         }
     });
 
-    // ---------- DELETE TASK ----------
-    taskslist.addEventListener('click', (e) => {
+    // ---------------- DELETE TASK ---------------- //
+
+    taskList.addEventListener('click', async (e) => {
+
         if(e.target.classList.contains('deleteTaskBtn'))
         {
-            const taskID = e.target.dataset.taskID;
-
-            fetch("{% url 'base:task' %}", {
-                method: 'POST',
+            e.preventDefault();
+            const taskID = e.target.dataset.taskId;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;            
+            
+            const respose = await fetch(taskURL, {
+                method: 'DELETE',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': '{{ csrf_token }}'
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
                 },
-                body: new URLSearchParams({
-                    'action': 'delete',
-                    'task_id': taskID
-                })
-            })
-            .then(res => res.json)
-            .then(data => {
-                if(data.status == 'Success')
-                {
-                    document.getElementById(`task-${taskID}`).remove();
-                }
-            })
+                body : JSON.stringify({task_id : taskID})
+            });
+            
+            const data = await respose.json();
+            
+            if(data.status == 'success')
+            {
+                // remove the entire task from DOM
+                e.target.parentElement.remove();
+            }
+            else 
+            {
+                alert(data.error || 'Failed to delete task');
+            }
         }
-    });
+    }); 
+
 
 });

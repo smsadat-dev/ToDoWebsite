@@ -1,75 +1,91 @@
+import json
+from typing import Union
+
 from django.shortcuts import render, redirect
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseNotAllowed
 
 from .models import TaskModel
 
 # Handles task creatiion, deletion, update and listing 
 
-def processTasks(request):
+def processTasks(request) -> Union[HttpResponse, JsonResponse]:
 
-    if request.method == 'POST':
-        action = request.POST.get('action')
     # ---------------- CREATE TASK ---------------- #
-        if action == 'create':
+    if request.method == 'POST':
+       
+        TaskTitle = request.POST.get('tasksTitle')
+        TaskDesc = request.POST.get('tasksDescrp')
+        TaskStatus = request.POST.get('isTaskDone')
 
-            TaskTitle = request.POST.get('tasksTitle')
-            TaskDesc = request.POST.get('tasksDescrp')
-            TaskStatus = request.POST.get('isTaskDone')
+        IsDone = True if TaskStatus == 'on' else False
 
-            IsDone = True if TaskStatus == 'on' else False
+        task = TaskModel(
+            taskTitle = TaskTitle,
+            taskDescription = TaskDesc,
+            isDone =  IsDone
+        )
+        task.save()
 
-            task = TaskModel(
-                taskTitle = TaskTitle,
-                taskDescription = TaskDesc,
-                isDone =  IsDone
-            )
-            task.save()
-
-            # return JSON model
-            return JsonResponse({
-                'status' : 'Success',
-                'message': 'Task created successfully',
-                'task': {
-                    #'id': task.id,
-                    'taskTitle': task.taskTitle,
-                    'taskDescription': task.taskDescription,
-                    'creationTime': str(task.creationTime),
-                    'isDone': task.isDone,
-                }  
-            })
+        # return JSON model
+        return JsonResponse({
+            'status' : 'success',
+            'message': 'Task created successfully',
+            'task': {
+                # 'id': task.id,
+                'taskTitle': task.taskTitle,
+                'taskDescription': task.taskDescription,
+                'creationTime': str(task.creationTime),
+                'isDone': task.isDone,
+            }  
+        })
         
     # ---------------- UPDATE TASK ---------------- #
 
-        elif action == 'update':    
-            task_id = request.POST.get('task_id')
-            is_done = request.POST.get('is_done') == 'true'
+    elif request.method in ['PUT', 'PATCH']:
+        
+        try: 
+            data = json.loads(request.body.decode('utf-8'))
+            task_id = data.get('task_id')
+            is_done = data.get('is_done', False) # default False if not sent
 
-            try:
-                task = TaskModel.objects.get(id=task_id)
-                task.isDone = is_done
-                task.save()
-                return JsonResponse({'status': 'Success', 'message': 'Task updated'})
+        except(json.JSONDecodeError, AttributeError): 
+            return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+        try:
+            task = TaskModel.objects.get(id=task_id)
+            task.isDone = is_done
+            task.save()
+            return JsonResponse({'status': 'success', 'message': 'Task updated'})
 
-            except TaskModel.DoesNotExist:
-                return JsonResponse({'status': 'Error', 'message': 'Task not found'})
+        except TaskModel.DoesNotExist:
+            return JsonResponse({'status': 'Error', 'message': 'Task not found'})
 
     # ---------------- DELETE TASK ---------------- #
 
-        elif action == 'delete':
-            task_id = request.POST.get('task_id')
+    elif request.method == 'DELETE':
+        
+        try: 
+            data = json.loads(request.body.decode('utf-8'))
+            task_id = data.get('task_id')
+        except(json.JSONDecodeError, AttributeError): 
+            return JsonResponse({'status': 'error', 'message':'Invalid request'}, status=400)
 
-            try:
-                task = TaskModel.objects.get(id=task_id)
-                task.delete()
-                return JsonResponse({'status': 'Success', 'message': 'Task deleted'})
+        try:
+            task = TaskModel.objects.get(id=task_id)
+            task.delete()
+            return JsonResponse({'status': 'success', 'message': 'Task deleted'})
 
-            except TaskModel.DoesNotExist:
-                return JsonResponse({'status': 'Error', 'message': 'Task not found'})
-
-        else:
-            return JsonResponse({'status': 'error', 'message': 'Invalid action'})
+        except TaskModel.DoesNotExist:
+            return JsonResponse({'status': 'Error', 'message': 'Task not found'}, status=404)
 
     # ---------------- GET TASKS (LIST) ---------------- #
-    if request.method == 'GET':
+
+    elif request.method == 'GET':
         tasks = TaskModel.objects.all()
         return render(request, 'taskview.html', {'tasks' : tasks})
+    
+    else:
+        # any other HTTP method
+        return HttpResponseNotAllowed(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
+
+
+    
